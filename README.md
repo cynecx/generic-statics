@@ -1,4 +1,4 @@
-# static-generic
+# static-generics
 
 A workaround for missing static generics in Rust.
 
