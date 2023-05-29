@@ -34,3 +34,10 @@ However, `static_generic` is marked `#[inline(never)]` which should provide stab
 (Note that `#[inline(never)]` is just a hint to the compiler and doesn't guarantee anything).
 
 Only zeroable types are allowed for now due to inline asm restrictions.
+
+This crate only supports these targets for now:
+
+- macOS `x86_64`, `aarch64`
+- Linux `x86_64`, `aarch64`
+- FreeBSD `x86_64`, `aarch64`
+- Windows `x86_64`
