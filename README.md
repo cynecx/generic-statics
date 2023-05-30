@@ -31,7 +31,8 @@ The static generics provided by this crate use static allocation (no dynamic all
 However, this crate only offers best-effort stable addresses:
 
 ```rust
-static_generic::<usize>() as *const _ == static_generic::<usize>() as *const _
+use static_generics::static_generic;
+assert_eq!(static_generic::<usize>() as *const _, static_generic::<usize>() as *const _);
 ```
 
 The used approach relies on inline assembly to instantiate/reserve static data for each monomorphized variant of the function.
