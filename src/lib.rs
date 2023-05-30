@@ -2,6 +2,8 @@
 
 //! A workaround for missing static generics in Rust.
 //!
+//! **This crate is experimental and might not be fully sound. Use at your own risk.**
+//!
 //! The core functionality is provided by [`static_generic`].
 //!
 //! ```rust
@@ -57,7 +59,7 @@ const fn cmp_max(a: usize, b: usize) -> usize {
 /// The reference returned by [`static_generic`] points to the static global variable for each
 /// generic `T` (but are lifetime erased). The static's value is zero-initialized.
 ///
-/// For caveats and limitations, refer to [crate#caveats-and-limitations].
+/// For caveats and limitations, refer to [top-module](crate#caveats-and-limitations).
 #[inline(never)]
 pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
     let mut addr: *const ();

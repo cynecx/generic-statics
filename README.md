@@ -1,5 +1,7 @@
 # static-generics
 
+**This crate is experimental and might not be fully sound. Use at your own risk.**
+
 A workaround for missing static generics in Rust.
 
 ```rust
