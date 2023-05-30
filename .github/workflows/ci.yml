@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RUSTFLAGS: -Dwarnings
+
+jobs:
+  rust:
+    name: ${{ format('Rust {0}', matrix.name) }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu
+            os: ubuntu-latest
+            rust: nightly
+          - name: macOS
+            os: macos-latest
+            rust: nightly
+          - name: Windows (msvc)
+            os: windows-latest
+            rust: nightly-x86_64-pc-windows-msvc
+          - name: Windows (gnu)
+            os: windows-latest
+            rust: nightly-x86_64-pc-windows-gnu
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{matrix.rust}}
+
+      - name: Test (Debug)
+        run: cargo test -- --nocapture
+
+      - name: Test (Rlease)
+        run: cargo test --release -- --nocapture
+
+  clippy:
+    name: Clippy & Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - run: cargo clippy --all-targets
+      - run: cargo fmt --check
