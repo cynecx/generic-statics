@@ -2,7 +2,7 @@
 
 mod zeroable;
 
-use std::mem;
+use std::{any::{Any, TypeId}, mem};
 
 pub use zeroable::Zeroable;
 
@@ -15,8 +15,12 @@ const fn cmp_max(a: usize, b: usize) -> usize {
 }
 
 #[inline(never)]
-pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
+pub fn static_generic<T: 'static + Zeroable + Any>() -> &'static T {
     let mut addr: *const ();
+
+    // HACK: We have to "use" the generic `T` in some way to force the compiler to emit every
+    // instatiation of this function, otherwise rustc might be smart and merge instantiations.
+    let type_id = TypeId::of::<T> as *const ();
 
     #[cfg(all(
         target_arch = "aarch64",
@@ -24,6 +28,7 @@ pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
     ))]
     unsafe {
         std::arch::asm!(
+            "/* {type_id} */",
             "adrp {x}, 1f@PAGE",
             "add {x}, {x}, 1f@PAGEOFF",
             ".pushsection __DATA,__data",
@@ -32,6 +37,7 @@ pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
             ".popsection",
             size = const { cmp_max(mem::size_of::<T>(), 1) },
             align = const { mem::align_of::<T>().ilog2() },
+            type_id = in(reg) type_id,
             x = out(reg) addr,
             options(nostack)
         );
@@ -43,6 +49,7 @@ pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
     ))]
     unsafe {
         std::arch::asm!(
+            "/* {type_id} */",
             "adrp {x}, 1f",
             "add {x}, {x}, :lo12:1f",
             ".pushsection .bss.static_generics,\"aw\",@nobits",
@@ -51,6 +58,7 @@ pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
             ".popsection",
             size = const { cmp_max(mem::size_of::<T>(), 1) },
             align = const { mem::align_of::<T>().ilog2() },
+            type_id = in(reg) type_id,
             x = out(reg) addr,
             options(nostack)
         );
@@ -62,6 +70,7 @@ pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
     ))]
     unsafe {
         std::arch::asm!(
+            "/* {type_id} */",
             "lea {x}, [rip + 1f]",
             ".pushsection __DATA,__data",
             ".p2align {align}, 0",
@@ -69,6 +78,7 @@ pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
             ".popsection",
             size = const { cmp_max(mem::size_of::<T>(), 1) },
             align = const { mem::align_of::<T>().ilog2() },
+            type_id = in(reg) type_id,
             x = out(reg) addr,
             options(nostack)
         );
@@ -77,6 +87,7 @@ pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
     #[cfg(all(target_arch = "x86_64", target_os = "windows"))]
     unsafe {
         std::arch::asm!(
+            "/* {type_id} */",
             "lea {x}, [rip + 1f]",
             ".pushsection .section .static_generics,\"dw\"",
             ".p2align {align}, 0",
@@ -84,6 +95,7 @@ pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
             ".popsection",
             size = const { cmp_max(mem::size_of::<T>(), 1) },
             align = const { mem::align_of::<T>().ilog2() },
+            type_id = in(reg) type_id,
             x = out(reg) addr,
             options(nostack)
         );
@@ -95,6 +107,7 @@ pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
     ))]
     unsafe {
         std::arch::asm!(
+            "/* {type_id} */",
             "lea {x}, [rip + 1f]",
             ".pushsection .bss.static_generics,\"aw\",@nobits",
             ".p2align {align}, 0",
@@ -102,6 +115,7 @@ pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
             ".popsection",
             size = const { cmp_max(mem::size_of::<T>(), 1) },
             align = const { mem::align_of::<T>().ilog2() },
+            type_id = in(reg) type_id,
             x = out(reg) addr,
             options(nostack)
         );
@@ -138,7 +152,7 @@ mod tests {
         let b = static_generic::<AtomicUsize>();
         assert_eq!(b.load(Ordering::Relaxed), 42);
 
-        let a = static_generic::<AtomicIsize>();
-        assert_eq!(a.load(Ordering::Relaxed), 0);
+        let a2 = static_generic::<AtomicIsize>();
+        assert_eq!(a2.load(Ordering::Relaxed), 0);
     }
 }
