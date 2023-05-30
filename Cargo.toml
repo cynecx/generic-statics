@@ -5,6 +5,7 @@ authors = ["cynecx <me@cynecx.net>"]
 description = "static generics for rust"
 documentation = "https://docs.rs/static-generics"
 edition = "2021"
+keywords = ["static", "generics"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/cynecx/static-generics"
 readme = "README.md"
