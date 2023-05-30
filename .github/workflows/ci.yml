@@ -41,6 +41,28 @@ jobs:
       - name: Test (Rlease)
         run: cargo test --release -- --nocapture
 
+  aarch64:
+    name: Rust aarch64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{matrix.rust}}
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+
+      - name: Test (Debug)
+        run: cross test --target aarch64-unknown-linux-gnu -- --nocapture
+
+      - name: Test (Rlease)
+        run: cross test --release --target aarch64-unknown-linux-gnu -- --nocapture
+
   clippy:
     name: Clippy & Rustfmt
     runs-on: ubuntu-latest
