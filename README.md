@@ -3,22 +3,26 @@
 A workaround for missing static generics in Rust.
 
 ```rust
+use std::{ptr, sync::atomic::{AtomicPtr, Ordering}};
+
 // This code doesn't work.
-
 static A<T>: AtomicPtr<T> = AtomicPtr::new(ptr::null_mut());
-
 let a = A::<usize>.load(Ordering::Relaxed);
 ```
 
-With `static-generic`:
+With `static-generics`:
 
 ```rust
-// This works.
+use std::sync::atomic::{AtomicPtr, Ordering};
+use static_generics::static_generic;
 
+// This works.
 let a = static_generic::<AtomicPtr<usize>>().load(Ordering::Relaxed);
 ```
 
 ## Caveats
+
+This crate is nightly only and relies on `#![feature(asm_const)]`.
 
 The static generics provided by this crate use static allocation (no dynamic allocation at runtime) and is almost zero-cost (aside from some inline asm instructions for computing the static address).
 
@@ -33,11 +37,12 @@ Unfortunately inlining will return a different version of the data and thus will
 However, `static_generic` is marked `#[inline(never)]` which should provide stable addresses in most situations
 (Note that `#[inline(never)]` is just a hint to the compiler and doesn't guarantee anything).
 
-Only zeroable types are allowed for now due to inline asm restrictions.
+Only "zeroable" types are allowed for now due to inline asm restrictions.
 
 This crate only supports these targets for now:
 
 - macOS `x86_64`, `aarch64`
 - Linux `x86_64`, `aarch64`
 - FreeBSD `x86_64`, `aarch64`
-- Windows `x86_64`
+
+Windows isn't support due to missing support for some inline asm directives (`.pushsection` and `.popsection`).

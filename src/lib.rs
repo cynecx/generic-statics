@@ -2,7 +2,7 @@
 
 mod zeroable;
 
-use std::{any::{Any, TypeId}, mem};
+use std::{any::TypeId, mem};
 
 pub use zeroable::Zeroable;
 
@@ -15,7 +15,7 @@ const fn cmp_max(a: usize, b: usize) -> usize {
 }
 
 #[inline(never)]
-pub fn static_generic<T: 'static + Zeroable + Any>() -> &'static T {
+pub fn static_generic<T: 'static + Zeroable>() -> &'static T {
     let mut addr: *const ();
 
     // HACK: We have to "use" the generic `T` in some way to force the compiler to emit every
@@ -84,23 +84,6 @@ pub fn static_generic<T: 'static + Zeroable + Any>() -> &'static T {
         );
     }
 
-    #[cfg(all(target_arch = "x86_64", target_os = "windows"))]
-    unsafe {
-        std::arch::asm!(
-            "/* {type_id} */",
-            "lea {x}, [rip + 1f]",
-            ".pushsection .section .static_generics,\"dw\"",
-            ".p2align {align}, 0",
-            "1: .zero {size}",
-            ".popsection",
-            size = const { cmp_max(mem::size_of::<T>(), 1) },
-            align = const { mem::align_of::<T>().ilog2() },
-            type_id = in(reg) type_id,
-            x = out(reg) addr,
-            options(nostack)
-        );
-    }
-
     #[cfg(all(
         target_arch = "x86_64",
         any(target_os = "none", target_os = "linux", target_os = "freebsd")
@@ -126,7 +109,10 @@ pub fn static_generic<T: 'static + Zeroable + Any>() -> &'static T {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::atomic::{AtomicIsize, AtomicUsize, Ordering};
+    use std::{
+        assert_ne,
+        sync::atomic::{AtomicIsize, AtomicPtr, AtomicUsize, Ordering},
+    };
 
     use super::static_generic;
 
@@ -141,6 +127,21 @@ mod tests {
         assert_eq!(d, e);
 
         assert_ne!(a as *const (), d as *const _ as *const ());
+    }
+
+    #[test]
+    fn unique_address() {
+        let a = static_generic::<AtomicUsize>() as *const _ as *const ();
+        let b = static_generic::<AtomicIsize>() as *const _ as *const ();
+        let c = static_generic::<usize>() as *const _ as *const ();
+        let d = static_generic::<AtomicPtr<()>>() as *const _ as *const ();
+
+        assert_ne!(a, b);
+        assert_ne!(a, c);
+        assert_ne!(a, d);
+        assert_ne!(b, c);
+        assert_ne!(b, d);
+        assert_ne!(c, d);
     }
 
     #[test]

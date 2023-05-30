@@ -26,12 +26,6 @@ jobs:
           - name: macOS
             os: macos-latest
             rust: nightly
-          - name: Windows (msvc)
-            os: windows-latest
-            rust: nightly-x86_64-pc-windows-msvc
-          - name: Windows (gnu)
-            os: windows-latest
-            rust: nightly-x86_64-pc-windows-gnu
 
     steps:
       - name: Checkout repository
@@ -56,6 +50,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: nightly
           components: clippy, rustfmt
 
       - run: cargo clippy --all-targets
