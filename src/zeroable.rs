@@ -7,6 +7,20 @@ use std::{
     },
 };
 
+/// Types that can be safely "zero-initialized".
+///
+/// ## Safety
+///
+/// The type this trait is implemented on must:
+///
+/// - be inhabited (no `!`)
+/// - have a state where all bits are all zeroes
+///
+/// ## Notes
+///
+/// Integral types (`i32`, `i64`, ...), and some other type that fulfill the above safety
+/// requirements have built-in impls that are provided by this crate.
+///
 pub unsafe trait Zeroable: Sized {}
 
 macro_rules! impl_integers {
