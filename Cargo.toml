@@ -1,13 +1,14 @@
 [package]
-name = "static-generics"
+name = "generic-statics"
 version = "0.1.0"
 authors = ["cynecx <me@cynecx.net>"]
-description = "static generics for rust"
-documentation = "https://docs.rs/static-generics"
+description = "generic statics for rust"
+documentation = "https://docs.rs/generic-statics"
 edition = "2021"
-keywords = ["static", "generics"]
+keywords = ["generic", "static"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/cynecx/static-generics"
+repository = "https://github.com/cynecx/generic-statics"
 readme = "README.md"
+rust-version = "1.74"
 
 [dependencies]

@@ -1,5 +1,6 @@
 use std::{
     cell::UnsafeCell,
+    marker::PhantomData,
     mem::{ManuallyDrop, MaybeUninit},
     sync::atomic::{
         AtomicBool, AtomicI16, AtomicI32, AtomicI64, AtomicI8, AtomicIsize, AtomicPtr, AtomicU16,
@@ -58,6 +59,9 @@ unsafe impl<T> Zeroable for MaybeUninit<T> {}
 
 unsafe impl<T: Zeroable> Zeroable for ManuallyDrop<T> {}
 unsafe impl<T: Zeroable> Zeroable for UnsafeCell<T> {}
+unsafe impl<T: ?Sized> Zeroable for PhantomData<T> {}
+
+unsafe impl<T: Zeroable, const N: usize> Zeroable for [T; N] {}
 
 macro_rules! impl_tuples {
     ($t1:ident) => {

@@ -1,8 +1,8 @@
-# static-generics
+# generic-statics
 
 **This crate is experimental and might not be fully sound. Use at your own risk.**
 
-A workaround for missing static generics in Rust.
+A workaround for missing generic statics in Rust.
 
 ```rust
 use std::{ptr, sync::atomic::{AtomicPtr, Ordering}};
@@ -12,27 +12,36 @@ static A<T>: AtomicPtr<T> = AtomicPtr::new(ptr::null_mut());
 let a = A::<usize>.load(Ordering::Relaxed);
 ```
 
-With `static-generics`:
+With `generic-statics`:
 
 ```rust
 use std::sync::atomic::{AtomicPtr, Ordering};
-use static_generics::static_generic;
+use generic_statics::{define_namespace, Namespace};
+
+define_namespace!(Test);
 
 // This works.
-let a = static_generic::<AtomicPtr<usize>>().load(Ordering::Relaxed);
+let a = Test::static_generic::<AtomicPtr<usize>>().load(Ordering::Relaxed);
 ```
 
 ## Caveats
 
-This crate is nightly only and relies on `#![feature(asm_const)]`.
+This crate is nightly only and relies on `#![feature(asm_const)]` (As of 2024-04-10, stabilization of that feature is blocked on `feature(inline_const)`).
 
-The static generics provided by this crate use static allocation (no dynamic allocation at runtime) and is almost zero-cost (aside from some inline asm instructions for computing the static address).
+The generic statics provided by this crate use static allocation (i.e. no dynamic allocation at runtime) and is _almost_ zero-cost (aside from some inline asm instructions for computing the static address).
 
 However, this crate only offers best-effort stable addresses:
 
 ```rust
-use static_generics::static_generic;
-assert_eq!(static_generic::<usize>() as *const _, static_generic::<usize>() as *const _);
+use generic_statics::{define_namespace, Namespace};
+
+define_namespace!(Test);
+
+// This is *not* guaranteed but in most cases this will work just fine.
+assert_eq!(
+    Test::static_generic::<usize>() as *const _,
+    Test::static_generic::<usize>() as *const _
+);
 ```
 
 The used approach relies on inline assembly to instantiate/reserve static data for each monomorphized variant of the function.
@@ -47,5 +56,4 @@ This crate only supports these targets for now:
 - macOS `x86_64`, `aarch64`
 - Linux `x86_64`, `aarch64`
 - FreeBSD `x86_64`, `aarch64`
-
-Windows isn't support due to missing support for some inline asm directives (`.pushsection` and `.popsection`).
+- Windows `x86_64`
